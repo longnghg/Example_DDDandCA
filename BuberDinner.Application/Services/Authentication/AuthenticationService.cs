@@ -1,7 +1,10 @@
+using BuberDinner.Application.Common.Errors;
 using BuberDinner.Application.Common.Interfaces;
+using BuberDinner.Application.Common.Interfaces.Errors.OneOfFlowControl;
 using BuberDinner.Application.Common.Interfaces.Persistence;
 using BuberDinner.Domain.Entities;
 using Microsoft.VisualBasic;
+using OneOf;
 
 
 namespace BuberDinner.Application.Services.Authentication;
@@ -20,7 +23,7 @@ public class AuthenticationService : IAuthenticationService
         // 1.validate user exists
         if (_userRepository.GetUserByEmail(email) is not User user)
         {
-            throw new Exception("User with given email does not exist");
+            throw new Exception("Invalid password");
         }
 
         // 2.validate password is valid
@@ -34,12 +37,12 @@ public class AuthenticationService : IAuthenticationService
         return new AuthenticationResult(user, token);
     }
 
-    public AuthenticationResult Register(string firstName, string lastName, string email, string password)
+    public OneOf<AuthenticationResult,IError> Register(string firstName, string lastName, string email, string password)
     {
         // 1. check if user exists
         if (_userRepository.GetUserByEmail(email) is not null)
         {
-            throw new Exception("User with given user already exists");
+            return new IError();
         }
 
         // 2. create user

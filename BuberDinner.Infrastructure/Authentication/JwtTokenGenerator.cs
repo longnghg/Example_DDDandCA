@@ -25,6 +25,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new Claim(JwtRegisteredClaimNames.FamilyName, lastName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+        Console.WriteLine($"hlongcusto secret: {_jwtSettings.Secret}");
         var signingCredentials = new SigningCredentials(
                         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
                         SecurityAlgorithms.HmacSha256);

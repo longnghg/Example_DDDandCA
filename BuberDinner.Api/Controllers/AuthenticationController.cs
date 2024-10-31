@@ -1,30 +1,32 @@
 using BuberDiner.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using BuberDinner.Application.Services.Authentication;
-using BuberDinner.Application.Common.Interfaces.Errors.OneOfFlowControl;
-using OneOf;
+using ErrorOr;
+using BuberDinner.Api.Controllers;
+using BuberDinner.Application.Services.Authentication.Commands;
+using BuberDinner.Application.Services.Authentication.Queries;
+using BuberDinner.Application.Services.Authentication.Common;
 namespace RuberDinner.Api.Controllers;
 
 [ApiController]
 [Route("auth")]
 // [ErrorHandlingFilter]
-public class AuthenticationController : ControllerBase
+public class AuthenticationController : ApiController
 {
-    private readonly IAuthenticationService _authenticationService;
-
-    public AuthenticationController(IAuthenticationService authenticationService)
+    private readonly IAuthenticationCommandService _authenticationCommandService;
+    private readonly IAuthenticationQueryService _authenticationQueryService;
+    public AuthenticationController(IAuthenticationCommandService authenticationCommandService, IAuthenticationQueryService authenticationQueryService)
     {
-        _authenticationService = authenticationService;
+        _authenticationCommandService = authenticationCommandService;
+        _authenticationQueryService = authenticationQueryService;
     }
 
     [HttpPost("register")]
     public IActionResult Register(RegisterRequest request)
     {
-        OneOf<AuthenticationResult, IError> registerResult = _authenticationService.Register(request.FirstName, request.LastName, request.Email, request.Password);
-
+        ErrorOr<AuthenticationResult> registerResult = _authenticationCommandService.Register(request.FirstName, request.LastName, request.Email, request.Password);
         return registerResult.Match(
             authResult => Ok(MapAuthResult(authResult)),
-            error => Problem(statusCode: (int)error.HttpStatusCode, title: error.ErrorMessage, detail: "The 2email you provided already exists in the system")
+            errors => Problem(errors)
         );
     }
 
@@ -41,13 +43,11 @@ public class AuthenticationController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login(LoginRequest request)
     {
-        var result = _authenticationService.Login(request.Email, request.Password);
-        return Ok(new AuthenticationResponse(
-           result.User.Id,
-           result.User.FirstName,
-           result.User.LastName,
-           result.User.Email,
-           result.Token));
+        var result = _authenticationQueryService.Login(request.Email, request.Password);
+        return result.Match(
+            authResult => Ok(MapAuthResult(authResult)),
+            errors => Problem(errors)
+        );
     }
 
 }

@@ -21,7 +21,5 @@ public class ErrorsController : ApiController
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
         };
         return Problem(statusCode: statusCode, title: message);
-
-        return Problem();
     }
 }
